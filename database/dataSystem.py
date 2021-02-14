@@ -1,5 +1,5 @@
-import PyBear.Bear as Bear
-import PyBear.System.Chronus as Cr
+import pyBear.bear as bear
+import pyBear.system.chronus as chronus
 
 Para_Money = -1
 Para_Date = -2
@@ -77,15 +77,15 @@ class Core:
             self.Input = self.Input[Counter+1:]
 
         if Para == 0:
-            return Cr.Date().String(-2)
+            return chronus.Date().String(-2)
         elif 0 < Para < 10:
-            return Cr.Date().Shift(Day=Para).String(-2)
+            return chronus.Date().Shift(Day=Para).String(-2)
         elif 10< Para < 20:
-            return Cr.Date().Shift(Day=-Para+10).String(-2)
+            return chronus.Date().Shift(Day=-Para+10).String(-2)
         elif len(str(Para)) == 8:
-            return Cr.Date(str(Para)).String(-2)
+            return chronus.Date(str(Para)).String(-2)
         elif len(str(Para)) == 14:
-            return Cr.Date(str(Para)).String(-2)
+            return chronus.Date(str(Para)).String(-2)
         else:
             raise Bear.BadBear(lambda: print('Parameter Error: Date'))
 
@@ -104,11 +104,3 @@ class Core:
         Ret = self.Input[:Counter]
         self.Input = self.Input[Counter+1:]
         return str(Ret)
-
-def GetInterval(Start, End):
-        Start = Cr.Date(str(Start//1000000))
-        End = Cr.Date(str(End//1000000))
-        return int((End-Start)/86400)
-
-
-import PyBear.TimeCapsule.Account as Account

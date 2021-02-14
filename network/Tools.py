@@ -2,9 +2,6 @@ import requests
 
 import PyBear.Bear as Bear
 
-def StartSocketServer():
-    pass
-
 
 def SendHttpGet(Url, Parameter):
     Request = requests.get(Url+'?'+Parameter)
