@@ -5,7 +5,7 @@ from subprocess import call
 import os
 
 def ClearScreen():
-    os.system('cls')
+    os.system('clear')
 
 def InitEnvironment():
     import platform
