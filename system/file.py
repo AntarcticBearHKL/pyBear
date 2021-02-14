@@ -1,86 +1,86 @@
 import sys,os
 
-import PyBear.Bear as Bear
+import pyBear.bear as bear
 
-def WriteU(Path, content):
-    if not os.path.exists(os.path.dirname(Path)):
-        os.makedirs(os.path.dirname(Path))
-    file = open(Path, 'w', encoding='utf-8')
-    file.write(content)
-    file.close()
+def writeU(path, content):
+    if not os.path.exists(os.path.dirname(path)):
+        os.makedirs(os.path.dirname(path))
+    node = open(path, 'w', encoding='utf-8')
+    node.write(content)
+    node.close()
 
-def ReadU(Path):
-    if not os.path.exists(Path):
-        print('File: ' + Path + ' Not Exist')
+def readU(path):
+    if not os.path.exists(path):
+        print('File: ' + path + ' Not Exist')
         return ''
-    retf = open(Path, 'r', encoding='utf-8')
-    Ret = retf.read()
-    retf.close()
-    return Ret
+    node = open(path, 'r', encoding='utf-8').read()
+    ret = node.read()
+    node.close()
+    return ret
 
-def WriteB(Path, content):
-    if not os.path.exists(os.path.dirname(Path)):
-        os.makedirs(os.path.dirname(Path))
-    file = open(Path, 'wb')
-    file.write(content)
-    file.close()
+def writeB(path, content):
+    if not os.path.exists(os.path.dirname(path)):
+        os.makedirs(os.path.dirname(path))
+    node = open(path, 'wb')
+    node.write(content)
+    node.close()
 
-def ReadB(Path):
-    if not os.path.exists(Path):
-        print('File: ' + Path + ' Not Exist')
+def readB(path):
+    if not os.path.exists(path):
+        print('File: ' + path + ' Not Exist')
         return ''
-    retf = open(Path, 'rb')
-    Ret = retf.read()
-    retf.close()
-    return Ret
+    node = open(path, 'rb')
+    ret = retf.read()
+    node.close()
+    return ret
 
-def Read(Path):
+def read(path):
     try:
-        return ReadU(Path)
+        return readU(path)
     except:
-        return ReadB(Path)
+        return readB(path)
 
-Write = WriteU
-
-
-def NewFile(Path):
-    Write(Path, '')
-
-NewDirectory = os.makedirs
+write = writeU
 
 
-def List(Path):
-    return os.listdir(Path)
+def createFile(path):
+    Write(path, '')
 
-def DetailList(Path):
-    Ret = {}
-    for node in flist(Path):
-        if os.path.isfile(fjoin(Path, node)):
-            Ret[node] = 'file'
+createDirectory = os.makedirs
+
+
+def list(path):
+    return os.listdir(path)
+
+def listDetail(path):
+    ret = {}
+    for node in flist(path):
+        if os.path.isfile(fjoin(path, node)):
+            ret[node] = 'file'
         else:
-            Ret[node] = 'directory'
-    return Ret
+            ret[node] = 'directory'
+    return ret
 
 
-def Removefile(Path):
-    if fexists(Path):
-        os.remove(Path)
+def removefile(path):
+    if fexists(path):
+        os.remove(path)
         return True
     else:
         return False
 
-def RemoveDirectory(Path):
-    for root, dirs, files in os.walk(Path, topdown=False):
+def removeDirectory(path):
+    for root, dirs, files in os.walk(path, topdown=False):
         for name in files:
             os.remove(os.path.join(root, name))
         for name in dirs:
             os.rmdir(os.path.join(root, name))
     os.rmdir(path)
 
-Rename = os.rename
+rename = os.rename
 
-Exists = os.path.exists
-Join = os.path.join
+exists = os.path.exists
+join = os.path.join
 
-IsFile = os.path.isfile
-IsDirectory = os.path.isdir
+isFile = os.path.isfile
+isDirectory = os.path.isdir
