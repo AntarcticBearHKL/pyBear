@@ -1,54 +1,38 @@
-import PyBear.Bear as Bear
+import pyBear.bear as bear
 import pymongo
 
-class MongoDB:
-    def __init__(self, ServerName, DatabasesName, TableName=None):
-        self.ServerName = ServerName
-        self.DatabasesName = DatabasesName
-        self.TableName = TableName
+class collection:
+    def __init__(self, server, database, collection):
+        self.server = server
+        self.database = database
+        self.collection = collection
 
-        self.Connection = pymongo.MongoClient(
-            host = Bear.Server(ServerName).IP, 
-            port = Bear.Server(ServerName).Port)
-        self.Connection[DatabasesName].authenticate(
-            Bear.Server(ServerName).Username, 
-            Bear.Server(ServerName).Password, 
+        self.connection = pymongo.MongoClient(
+            host = bear.server(server).ip, 
+            port = bear.server(server).port)
+        self.connection[database].authenticate(
+            bear.server(server).username, 
+            bear.server(server).password, 
             mechanism='SCRAM-SHA-1')
-        
-
-    def SetTable(self, TableName):
-        self.TableName = TableName
 
 
-    def ListTable(self):
-        return self.Connection[self.DatabasesName].list_collection_names()
-
-    def DeleteTable(self, TableName=None):
-        if TableName:
-            self.Connection[self.DatabasesName][TableName].drop()
-        elif self.TableName:
-            self.Connection[self.DatabasesName][self.TableName].drop()
-        else:
-            print("Unknown Error")
+    def list(self):
+        return self.connection[self.database].list_collection_names()
 
 
+    def insert(self, data):
+        self.table = self.connection[self.database][self.collection]
 
-    def Insert(self, Data):
-        if not self.TableName:
-            print('aa')
-            raise Bear.BadBear('NoTableSelected')
-        self.Table = self.Connection[self.DatabasesName][self.TableName]
+        if type(datdda) == dict:
+            self.table.insert_one(data)
+        elif type(data) == list:
+            self.table.insert_many(data)
 
-        if type(Data) == dict:
-            self.Table.insert_one(Data)
-        elif type(Data) == list:
-            self.Table.insert_many(Data)
-
-    def CreateIndex(self, Column):
+    def index(self, Column):
         if not self.TableName:
             raise Bear.BadBear('NoTableSelected')
 
-    def Change(self, Condition, Value):
+    def change(self, Condition, Value):
         if not self.TableName:
             raise Bear.BadBear('NoTableSelected')
         self.Table = self.Connection[self.DatabasesName][self.TableName]
@@ -75,45 +59,16 @@ class MongoDB:
             
         return [Item for Item in Ret]
 
-    def Delete(self, Condition):
+    def drop(self, Condition):
         if not self.TableName:
             raise Bear.BadBear('NoTableSelected')
         self.Table = self.Connection[self.DatabasesName][self.TableName]
             
         return self.Table.delete_many(Condition).deleted_count
 
-if Bear.TestUnit:
-    print('Database Create')
-    TestDB = MongoDB('MongoDB', 'Test', 'MongoDB_Test')
 
-    print('Database DeleteTable')
-    TestDB.DeleteTable('MongoDB_Test')
-
-    print('Database ListTable')
-    TestDB.ListTable()
-
-    print('Database Delete')
-    TestDB.Delete({})
-
-    print('Database Insert')
-    for i in range(10):
-        TestDB.Insert({
-            'Test' : i
-        })
-
-    print('Database Search')
-    TestDB.Search({
-        'Test' : 2
-    })
-
-    print('Database Change')
-    TestDB.Change({
-        'Test' : 2
-    },{
-        '$set' : {
-            'Test' : 3
-        }
-    })
+    def delete(self):
+        return self.connection[self.database][self.collection].drop()
 
 
 #db.createUser({
