@@ -17,6 +17,14 @@ class frame:
             else:
                 self.timeShift = bear.localTimeZoneShift  
 
+        elif len(str(load)) == 8: #YYYYMMDD
+            self.time = datetime.datetime(
+                int(load[0:4]), int(load[4:6]), int(load[6:8]))
+            if type(timeShift) == int:
+                self.timeShift = timeShift
+            else:
+                self.timeShift = bear.localTimeZoneShift
+
         elif len(str(load)) == 10: #YYYY-MM-DD
             load = str(load)
             self.time = datetime.datetime(
@@ -221,17 +229,13 @@ class frame:
     def __str__(self):
         return self.clock()
 
-    def __floordiv__(self, rhs): #[Y,M,D,h,m,s] (//)
-        ret = []
-        ret.append(self.yearInt()- rhs.yearInt())
-        ret.append(self.monthInt()- rhs.monthInt())
-        ret.append(self.dayInt()- rhs.dayInt())
-        ret.append(self.hourInt()- rhs.hourInt())
-        ret.append(self.minuteInt()- rhs.minuteInt())
-        ret.append(self.secondInt()- rhs.secondInt())
-        return ret
 
-    def __sub__(self, rhs): # How Much Second (-)
+    def __add__(self, rhs):
+        return self.shift(second=rhs)
+
+    def __sub__(self, rhs): # How Much Second ( - )
+        if type(rhs) == int:
+            return self.shift(second=-rhs)
         ret = 0
         timeList = self // rhs
         yearStart = rhs.yearInt()
@@ -250,6 +254,16 @@ class frame:
         ret += timeList[2]*86400 + timeList[3]*3600 + timeList[4]*60 + timeList[5]
         return ret
 
+
+    def __floordiv__(self, rhs): #[Y,M,D,h,m,s] (//)
+        ret = []
+        ret.append(self.yearInt()- rhs.yearInt())
+        ret.append(self.monthInt()- rhs.monthInt())
+        ret.append(self.dayInt()- rhs.dayInt())
+        ret.append(self.hourInt()- rhs.hourInt())
+        ret.append(self.minuteInt()- rhs.minuteInt())
+        ret.append(self.secondInt()- rhs.secondInt())
+        return ret
 
 
     def __lt__(self, rhs):
@@ -283,81 +297,136 @@ class frame:
         return False
 
 
+MissingValueMode_NoneValue = 0
+MissingValueMode_ForewardValue = 1
+MissingValueMode_CustomFunction = 99
 
 class frameSequence:
-    def __init__(self):
-        self.frameLength = 0
+    def __init__(self, value=None, missingValueMode=MissingValueMode_ForewardValue
+):
+        self.frame = []
+        self.value = []
 
-    def insertData(self, cover):
+        self.startFrame = None
+        self.endFrame = None
+
+        if value:
+            self.frame = value[0]
+            self.value = value[1]
+    
+        self.missingValueMode = missingValueMode
+
+    def insert(self, data, override = False):
+        for item in data:
+            if self.frame == []:
+                self.frame.append(item[0])
+                self.value.append(item[1])
+                continue
+
+            for position in range(self.length()):
+                if item[0] < self.frame[position]:
+                    self.frame.insert(position, item[0])
+                    self.value.insert(position, item[1])
+                    break
+                elif item[0] == self.frame[position]:
+                    if item[1] == self.value[position]:
+                        break
+                    elif override:
+                        self.value[position] = item[1]
+                        break
+                    else:
+                        self.show()
+                        assert False
+                else:
+                    self.frame.append(item[0])
+                    self.value.append(item[1])
+                    break
+        return self
+
+    def setMissingValueMode(self, valueMode, valueFuncion=None):
+        if valueMode == MissingValueMode_CustomFunction:
+            self.missingValueMode = valueMode
+            self.missingValueModeFunction = valueFunction
+            return
+        self.missingValueMode = valueMode
+
+
+    def length(self):
+        return len(self.frame)
+
+
+    def __getitem__(self, index):
+        if isinstance(index, int):
+            return [self.frame[index], self.value[index]]
+        if isinstance(index, frame):
+            if self.missingValueMode == MissingValueMode_NoneValue: 
+                for counter in range(self.length()):
+                    if self.frame[counter] == index:
+                        return self.value[counter]
+                return None
+            elif self.missingValueMode == MissingValueMode_ForewardValue:
+                for counter in range(len(self.frame)):
+                    if index < self.frame[counter]:
+                        if counter == 0:
+                            return None
+                        return self.value[counter-1]
+                return self.value[-1]
+            elif self.missingValueMode == MissingValueMode_CustomFunction:
+                return self.missingValueModeFunction(self, index)
+
+        elif isinstance(index, slice):
+            if isinstance(index.start, int) or isinstance(index.stop, int):
+               return frameSequence([self.frame[index.start:index.stop+1], self.value[index.start:index.stop+1]])
+
+            if isinstance(index.start, frame) or isinstance(index.stop, frame):
+                if index.step == None:
+                    startPoint = None
+                    endPoint = None
+                    for counter in range(self.length()):
+                        if self.frame[counter] == index.start:
+                            startPoint = counter
+                        if self.frame[counter] == index.stop:
+                            endPoint = counter
+                    return frameSequence([[self.frame[startPoint, endPoint+1]], [self.value[startPoint, endPoint]]])
+                    
+                if isinstance(index.step, int):
+                    ret = []
+                    pointer = index.start
+                    while pointer <= index.stop:
+                        inFrame = frame(pointer)
+                        inValue = self[inFrame]
+                        ret.append([inFrame, inValue])
+                        pointer = pointer + index.step 
+                    return frameSequence(ret)
+
+    def window(self, width, start, end):
+        print(index)
+
+
+    def isEmpty(self):
+        if self.frame == []:
+            return True
+        return False
+
+    def show(self):
+        for counter in range(len(self.value)):
+            print(self.frame[counter], ':', self.value[counter])
+
+
+class frameSequenceWindow:
+    def __init__(self):
         pass
 
-    def getDayInterval(Start, End):
-        Starty = Date(Start).yearInt()
-        Startm = Date(Start).monthInt()
-        Startd = Date(Start).dayInt()
-        Endy = Date(End).year()
-        Endm = Date(End).month()
-        Endd = Date(End).dayInt()
-        ret = []
-        for month in calender.getBetweenmonth(Start, End):
-            monthDays = calender.getDayNum(int(month[0:4]), int(month[4:6]))
-        while True:
-            if Startd<10:
-                ret.append(str(month) + '0' + str(Startd))
-            else:
-                ret.append(str(month)+str(Startd))
-            Startd += 1
-            if (str(month) == (Endy + Endm)) and Startd > Endd:
-                break
-            if Startd > monthDays:
-                Startd = 1
-                break
-        return ret
 
-    def getMonthInterval(Start, End):
-        Starty = Date(Start).yearInt()
-        Startm = Date(Start).monthInt()
-        Endy = Date(End).yearInt()
-        Endm = Date(End).monthInt()
-        ret = []
-        for year in calender.getBetweenyear(Start, End):
-            while True:
-                if Startm<10:
-                    ret.append(str(year) + '0' + str(Startm))
-                else:
-                    ret.append(str(year)+str(Startm))
-            Startm += 1
-            if Startm > 12:
-                Startm = 1
-                break
-            if year == Endy and Startm > Endm:
-                break
-        return ret
+class frameSequenceMatrix:
+    def __init__(self):
+        self.sequence = {}
 
-    def getYearInterval(Start, End):
-        Starty = Date(Start).yearInt()
-        Endy = Date(End).yearInt()
-        ret = []
-        while True:
-            ret.append(Starty)
-            Starty += 1
-            if Starty > Endy:
-                break
-        return ret
+    def insertSequence(self, name, sequence):
+        self.sequence[name] = sequence
 
-    def frameClip(Line, Start, End):
-        _Start = None
-        _End = None
-        for _count in range(len(Line) - 1):
-            if Date(Line[_count]) < Date(Start) <= Date(Line[_count + 1]):
-                _Start = _count + 1
-            if Date(Line[_count]) <= Date(End) < Date(Line[_count + 1]):
-                _End = _count
-            if Date(Start) == Date(Line[_count]):
-                _Start = _count
-            if Date(End) == Date(Line[_count + 1]):
-                _End = _count + 1
-        return [_Start, _End]
+    def backtrack(self):
+        pass
 
 
 timerList = {}

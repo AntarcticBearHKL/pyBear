@@ -1,21 +1,27 @@
 import requests
 
-import PyBear.Bear as Bear
+import pyBear.bear as bear
 
-def StartSocketServer():
+def SocketServer():
     pass
 
 
-def SendHttpGet(Url, Parameter):
-    Request = requests.get(Url+'?'+Parameter)
-    return [Request.status_code, Request.text]
 
-def SendHttpPost(Url, Parameter):
-    Request = requests.post(Url, data=json.dumps(Parameter))
-    return [Request.status_code, Request.text]
-
-def SendTcpRequest():
+def TcpRequest():
     pass
 
-def SendUdpRequest():
+def UdpRequest():
     pass
+
+
+
+def GetPrivateIP():
+    Request = requests.get("http://www.baidu.com", stream=True)
+    IP = Request.raw._connection.sock.getsockname()
+    return IP[0]
+
+def GetPublicIP():
+    Request = requests.get("http://www.net.cn/static/customercare/yourip.asp")
+    IP = re.findall(r'\d+\.\d+\.\d+\.\d+', Request.content.decode('utf-8', errors='ignore'))
+    return IP[0]
+

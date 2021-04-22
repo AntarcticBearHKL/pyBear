@@ -7,106 +7,106 @@ import json
 import ssl
 import re
 
-import PyBear.Bear as Bear
-import PyBear.System.File as File
+import pyBear.bear as bear
+import pyBear.system.file as filebear
 
-def HttpServer(
-    PageLocation=None, LibraryLocation=None, 
-    GetHandler=None, PostHandler=None, ParameterAnalyst=None, Port=80):
-    Application( [(r".*", GetHttpServerListener(PageLocation, LibraryLocation, GetHandler, PostHandler, ParameterAnalyst) ),] ).listen(Port)
+def httpServer(pageLocation=None, libraryLocation=None, getHandler=None, postHandler=None, parameterAnalyst=None, port=80):
+    Application( [(r".*", getHttpServerListener(pageLocation, libraryLocation, getHandler, postHandler, parameterAnalyst) ),] ).listen(Port)
     IOLoop.instance().start()
 
-def HttpsServer(
-    CertificationLocation, PageLocation=None, LibraryLocation=None, 
-    GetHandler=None, PostHandler=None, ParameterAnalyst=None, Port=443):
+def httpsServer(certificationLocation=None, pageLocation=None, libraryLocation=None, getHandler=None, postHandler=None, parameterAnalyst=None, port=443):
+    if not certificationLocation:
+        print('No Certification Assigned!')
+        return
     HTTPServer(
         Application(
-            [(r".*", GetHttpServerListener(PageLocation, LibraryLocation, GetHandler, PostHandler, ParameterAnalyst)),], 
+            [(r".*", getHttpServerListener(pageLocation, libraryLocation, getHandler, postHandler, parameterAnalyst)),], 
             **{
-            "static_path" : File.Join(os.path.dirname(__file__), "static"),
+            "static_path" : filebear.join(os.path.dirname(__file__), "static"),
         }),
         ssl_options={
-            "certfile": File.Join(CertificationLocation, 'crt'),
-            "keyfile": File.Join(CertificationLocation, 'key'),
+            "certfile": filebear.join(certificationLocation, 'crt'),
+            "keyfile": filebear.join(certificationLocation, 'key'),
         }).listen(Port)
     IOLoop.instance().start()
 
-def GetHttpServerListener(PageLocation, LibraryLocation, 
-    GetHandler, PostHandler, ParameterAnalyst):
+def getHttpServerListener(pageLocation, libraryLocation, getHandler, postHandler, parameterAnalyst):
     class HTTPListener(RequestHandler):
         def get(self):
             try:
-                if GetHandler:
-                    GetHandler(RequestAnalyst(self, PageLocation, LibraryLocation, ParameterAnalyst))
-            except Exception as Error:
-                print(Error)
+                if getHandler:
+                    getHandler(requestHandler(self, pageLocation, libraryLocation, parameterAnalyst))
+            except Exception as error:
+                print(error)
                 self.set_status(403)
-                self.write('Nobody Want To Respond You')
+                self.write('No Respond')
 
         def post(self):
             try:
-                if PostHandler:
-                    PostHandler(RequestAnalyst(self, PageLocation, LibraryLocation, ParameterAnalyst))   
-            except Exception as Error:
-                print(Error)
+                if postHandler:
+                    postHandler(requestHandler(self, pageLocation, libraryLocation, parameterAnalyst))   
+            except Exception as error:
+                print(error)
                 self.set_status(403)
-                self.write(' Nobody Responds You ')
+                self.write('No Respond')
     return HTTPListener
 
 
-class RequestAnalyst:
-    def __init__(self, Connection, PageLocation, LibraryLocation, ParameterAnalyst):
-        self.Connection = Connection
+class requestHandler:
+    def __init__(self, connection, pageLocation, libraryLocation, parameterAnalyst):
+        self.connection = connection
 
-        self.PageLocation = PageLocation
-        self.LibraryLocation = LibraryLocation
-        self.Method = self.Connection.request.method
-        self.Path = self.Connection.request.path.split('/')
+        self.pageLocation = pageLocation
+        self.libraryLocation = libraryLocation
+        self.method = self.connection.request.method
+        self.path = self.connection.request.path.split('/')
 
-        self.Request = self.Connection.request
-        self.Argument = self.Connection.request.arguments
-        self.Body = self.Connection.request.body
+        self.request = self.connection.request
+        self.argument = self.connection.request.arguments
+        self.body = self.connection.request.body
 
-        if ParameterAnalyst:
-            self.Parameter = ParameterAnalyst(self.Request, self.Argument, self.Body)
+        if parameterAnalyst:
+            self.parameter = parameterAnalyst(self.request, self.argument, self.body)
         else:
-            self.Parameter = {}
+            self.parameter = {}
 
 
-    def Write(self, Content):
-        self.Connection.write(Content)
+    def write(self, content):
+        self.connection.write(content)
 
 
-    def ReturnPage(self):
-        Filetype = self.Path[1]
+    def returnPage(self):
+        if len(self.path) == 1:
+            self.connection.write('URL ERROR')
+        if self.path[1] == '':
+            self.connection.write('URL ERROR')
 
-        if len(self.Path)==1 or Filetype == '':
-            self.Connection.write('URL ERROR')
+        filetype = self.path[1]
 
-        if Filetype == 'libcss' or Filetype == 'libjs':
-            FilePath = self.LibraryLocation
+        if filetype == 'libcss' or filetype == 'libjs':
+            filePath = self.libraryLocation
         else:
-            FilePath = File.Join(self.PageLocation, Filetype)
+            filePath = filebear.join(self.pageLocation, filetype)
 
-        for Item in self.Path[2:]:
-            FilePath = File.Join(FilePath, Item)
+        for item in self.Path[2:]:
+            filePath = filebear.join(filePath, item)
 
-        RetFile = File.ReadB(FilePath)
+        retFile = filebear.readB(filePath)
 
-        if Filetype == 'html':
-            self.Connection.set_header('Content-Type', 'text/html')
-        elif Filetype == 'css' or Filetype == 'libcss':
-            self.Connection.set_header('Content-Type', 'text/css')    
-        elif Filetype == 'javascript' or Filetype == 'libjs':
-            self.Connection.set_header('Content-Type', 'text/javascript')
+        if filetype == 'html':
+            self.connection.set_header('Content-Type', 'text/html')
+        elif filetype == 'css' or filetype == 'libcss':
+            self.connection.set_header('Content-Type', 'text/css')    
+        elif filetype == 'javascript' or filetype == 'libjs':
+            self.connection.set_header('Content-Type', 'text/javascript')
         else:
-            self.Connection.set_header('Content-Type', 'application/octet-stream')
+            self.connection.set_header('Content-Type', 'application/octet-stream')
 
-        self.Connection.write(RetFile)
+        self.connection.write(retFile)
 
 
-    def Redirect(self, Destination):
-        self.Connection.redirect(Destination)
+    def redirect(self, destination):
+        self.connection.redirect(destination)
 
 
     def GetCookie(self):
@@ -116,22 +116,20 @@ class RequestAnalyst:
         pass
 
 
-    def PrintRequest(self):
-        for Item in self.Request.__dict__:
-            print(Item, ':', self.Request.__dict__[Item])
+    def printRequest(self):
+        for item in self.request.__dict__:
+            print(item, ':', self.request.__dict__[Item])
         print('---------------------------------------')
-        for Item in self.__dict__:
-            print(Item, ':', self.__dict__[Item])
+        for item in self.__dict__:
+            print(item, ':', self.__dict__[Item])
         print('---------------------------------------')
 
 
 
-def GetPrivateIP():
-    Request = requests.get("http://www.baidu.com", stream=True)
-    IP = Request.raw._connection.sock.getsockname()
-    return IP[0]
+def httpGet(url, parameter):
+    request = requests.get(url+'?' + parameter)
+    return [request.status_code, request.text]
 
-def GetPublicIP():
-    Request = requests.get("http://www.net.cn/static/customercare/yourip.asp")
-    IP = re.findall(r'\d+\.\d+\.\d+\.\d+', Request.content.decode('utf-8', errors='ignore'))
-    return IP[0]
+def httpPost(url, parameter):
+    request = requests.post(url, data=json.dumps(parameter))
+    return [request.status_code, request.text]
