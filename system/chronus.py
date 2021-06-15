@@ -5,63 +5,56 @@ import time
 import pyBear.bear as bear
 
 class frame:
-    def __init__(self, load=None, timeShift=None):
+    def __init__(self, load=None, timeZone=bear.systemTimeZone):
+        timeZone = int(timeZone)
         if type(load) == frame:
             self.time = load.time
-            self.timeShift = load.timeShift
+            self.timeZone = load.timeZone
 
         elif type(load) == datetime.datetime:
             self.time = load
-            if type(timeShift) == int:
-                self.timeShift = timeShift 
-            else:
-                self.timeShift = bear.localTimeZoneShift  
+            self.timeZone = timeZone
 
         elif len(str(load)) == 8: #YYYYMMDD
             self.time = datetime.datetime(
                 int(load[0:4]), int(load[4:6]), int(load[6:8]))
-            if type(timeShift) == int:
-                self.timeShift = timeShift
-            else:
-                self.timeShift = bear.localTimeZoneShift
+            self.timeZone = timeZone
 
         elif len(str(load)) == 10: #YYYY-MM-DD
             load = str(load)
             self.time = datetime.datetime(
                 int(load[0:4]), int(load[5:7]), int(load[8:10]))
-            if type(timeShift) == int:
-                self.timeShift = timeShift 
-            else:
-                self.timeShift = bear.localTimeZoneShift 
+            self.timeZone = timeZone
 
         elif len(str(load)) == 19: #YYYY-MM-DD HH:MM:SS
             load = str(load)
             self.time = datetime.datetime(
                 int(load[0:4]), int(load[5:7]), int(load[8:10]), 
                 int(load[11:13]), int(load[14:16]), int(load[17:19]))
-            if type(timeShift) == int:
-                self.timeShift = timeShift 
-            else:
-                self.timeShift = bear.localTimeZoneShift 
-        
+            self.timeZone = timeZone
+        elif len(str(load)) == 14: #YYYYMMDDHHMMSS
+            load = str(load)
+            self.time = datetime.datetime(
+                int(load[0:4]), int(load[4:6]), int(load[6:8]), 
+                int(load[8:10]), int(load[10:12]), int(load[12:14]))
+            self.timeZone = timeZone
         elif len(str(load)) == 18: #YYYYMMDDHHMMSS(TZ)
             load = str(load)
             self.time = datetime.datetime(
                 int(load[0:4]), int(load[4:6]), int(load[6:8]), 
                 int(load[8:10]), int(load[10:12]), int(load[12:14]))
-            self.timeShift = int(load[15:17])
+            self.timeZone = int(load[15:17])
 
         elif len(str(load)) == 24: #ISOFormate
             load = str(load)
             self.time = datetime.datetime.fromisoformat(load[:-5])
-            self.timeShift = 0
+            self.timeZone = 0
         
         else:
             self.time = datetime.datetime.now()
-            self.timeShift = bear.localTimeZoneShift
+            self.timeZone = timeZone
 
-        self.timeZoneRectification(shift=bear.localTimeZoneShift)
-
+        self.timeZoneRectification(shift = bear.defaultTimeZone)
 
 
     def date(self): #YYYY-MM-DD 10
@@ -74,9 +67,12 @@ class frame:
         return frame(self).timeZoneRectification().time.isoformat().split('.')[0]+'.000Z'
 
     def stringify(self): #YYYYMMDDHHMMSS(TZ) 18
-       return self.time.strftime('%Y%m%d%H%M%S') +'(' + str(self.timeShift) + ')'
+        return self.time.strftime('%Y%m%d%H%M%S') +'(' + str(self.timeZone) + ')'
 
-    
+    def timestamp(self):
+        return int(self.time.strftime('%Y%m%d%H%M%S')) - int(self.timeZone)
+
+
     def year(self):
         return str(self.time.date().year)
 
@@ -191,9 +187,9 @@ class frame:
 
 
     def timeZoneRectification(self, shift=0):
-        timeShiftDelta = shift - self.timeShift
+        timeShiftDelta = shift - self.timeZone
         self.shift(hour=timeShiftDelta)
-        self.timeShift = shift
+        self.timeZone = shift
         return self
 
     def equalization(self):

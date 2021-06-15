@@ -11,7 +11,7 @@ import pyBear.bear as bear
 import pyBear.system.file as filebear
 
 def httpServer(pageLocation=None, libraryLocation=None, getHandler=None, postHandler=None, parameterAnalyst=None, port=80):
-    Application( [(r".*", getHttpServerListener(pageLocation, libraryLocation, getHandler, postHandler, parameterAnalyst) ),] ).listen(Port)
+    Application( [(r".*", getHttpServerListener(pageLocation, libraryLocation, getHandler, postHandler, parameterAnalyst) ),] ).listen(port)
     IOLoop.instance().start()
 
 def httpsServer(certificationLocation=None, pageLocation=None, libraryLocation=None, getHandler=None, postHandler=None, parameterAnalyst=None, port=443):
@@ -33,22 +33,12 @@ def httpsServer(certificationLocation=None, pageLocation=None, libraryLocation=N
 def getHttpServerListener(pageLocation, libraryLocation, getHandler, postHandler, parameterAnalyst):
     class HTTPListener(RequestHandler):
         def get(self):
-            try:
-                if getHandler:
-                    getHandler(requestHandler(self, pageLocation, libraryLocation, parameterAnalyst))
-            except Exception as error:
-                print(error)
-                self.set_status(403)
-                self.write('No Respond')
+            if getHandler:
+                getHandler(requestHandler(self, pageLocation, libraryLocation, parameterAnalyst))
 
         def post(self):
-            try:
-                if postHandler:
-                    postHandler(requestHandler(self, pageLocation, libraryLocation, parameterAnalyst))   
-            except Exception as error:
-                print(error)
-                self.set_status(403)
-                self.write('No Respond')
+            if postHandler:
+                postHandler(requestHandler(self, pageLocation, libraryLocation, parameterAnalyst))   
     return HTTPListener
 
 
@@ -62,7 +52,9 @@ class requestHandler:
         self.path = self.connection.request.path.split('/')
 
         self.request = self.connection.request
-        self.argument = self.connection.request.arguments
+        self.argument = {}
+        for item in self.connection.request.arguments:
+            self.argument[item] = self.connection.request.arguments[item][0].decode(encoding='utf-8')
         self.body = self.connection.request.body
 
         if parameterAnalyst:
@@ -117,17 +109,23 @@ class requestHandler:
 
 
     def printRequest(self):
+        print('\n\n')
+        print('-------------Information---------------')
         for item in self.request.__dict__:
-            print(item, ':', self.request.__dict__[Item])
+            print(item, ':', self.request.__dict__[item])
         print('---------------------------------------')
         for item in self.__dict__:
-            print(item, ':', self.__dict__[Item])
+            print(item, ':', self.__dict__[item])
         print('---------------------------------------')
 
 
 
-def httpGet(url, parameter):
-    request = requests.get(url+'?' + parameter)
+def httpGet(url, parameterData):
+    parameter = '?'
+    for item in parameterData:
+        parameter += str(item) + '=' + parameterData[item] + '&'
+    print(url+parameter)
+    request = requests.get(url + parameter)
     return [request.status_code, request.text]
 
 def httpPost(url, parameter):

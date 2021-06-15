@@ -8,7 +8,8 @@ testUnit = False
 import time
 import datetime
 startTime = datetime.datetime.now()
-localTimeZoneShift = int(int(time.strftime('%z'))/100)
+systemTimeZone = int(int(time.strftime('%z'))/100)
+defaultTimeZone = 8
 def upTime():
     print(datetime.datetime.now() - startTime)
 
@@ -53,9 +54,10 @@ def catchBadBear(fn, *args, **kwargs):
 
 serverList = {}
 class newServer:
-    def __init__(self, serverName, key, serverCode):
-        import pyBear.math.cipher as cipher
-        if cipher.AESDecrypt(serverCode[176:]) != 'Authenticated':
+    def __init__(self, serverName, serverCode):
+        import pyBear.mathematics.cipher as cipher
+        key = input('Input Password For ' + serverName + ': ')
+        if cipher.AESDecrypt(serverCode[176:], key) != 'Authenticated':
             print('Key Error')
             return None
         self.ip = cipher.AESDecrypt(serverCode[:44], key)
@@ -67,12 +69,12 @@ class newServer:
 def server(serverName):
     return serverList[serverName]
 
-def generateserverCode(key, ip, port, username, password):
-    import pyBear.math.cipher as cipher
+def generateServerCode(key, ip, port, username, password):
+    import pyBear.mathematics.cipher as cipher
     ret = ''
-    ret += cipher.AESEncrypt(IP, key)
-    ret += cipher.AESEncrypt(Port, key)
-    ret += cipher.AESEncrypt(Username, key)
-    ret += cipher.AESEncrypt(Password, key)
+    ret += cipher.AESEncrypt(ip, key)
+    ret += cipher.AESEncrypt(port, key)
+    ret += cipher.AESEncrypt(username, key)
+    ret += cipher.AESEncrypt(password, key)
     ret += cipher.AESEncrypt('Authenticated', key)
     return ret

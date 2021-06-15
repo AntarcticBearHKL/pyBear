@@ -23,42 +23,36 @@ class collection:
     def insert(self, data):
         self.table = self.connection[self.database][self.collection]
 
-        if type(datdda) == dict:
+        if type(data) == dict:
             self.table.insert_one(data)
         elif type(data) == list:
             self.table.insert_many(data)
 
-    def index(self, Column):
-        if not self.TableName:
-            raise Bear.BadBear('NoTableSelected')
+    def index(self, column):
+        pass
 
-    def change(self, Condition, Value):
-        if not self.TableName:
-            raise Bear.BadBear('NoTableSelected')
-        self.Table = self.Connection[self.DatabasesName][self.TableName]
+    def change(self, condition, value):
+        self.table = self.connection[self.database][self.collection]
 
-        Ret = self.Table.update_many(Condition, Value)
-        return (Ret.matched_count, Ret.modified_count)
+        ret = self.table.update_many(condition, value)
+        return (ret.matched_count, ret.modified_count)
 
-    def Search(self, Condition, Count=None, Sort=None, Limit=None):
-        if not self.TableName:
-            raise Bear.BadBear('NoTableSelected')
-        self.Table = self.Connection[self.DatabasesName][self.TableName]
+    def search(self, condition, count=None, sort=None, limitation=None):
+        self.table = self.connection[self.database][self.collection]
 
-        if Count:
-            Ret = self.Table.find(Condition).count()
-            return Ret
-        elif Sort and not Limit:
-            Ret = self.Table.find(Condition).sort(Sort[0], Sort[1])
-        elif Sort and Limit:
-            Ret = self.Table.find(Condition).sort(Sort[0], Sort[1]).limit(Limit)
-        elif Limit:
-            Ret = self.Table.find(Condition).limit(Limit)
+        if count:
+            ret = self.table.find(condition).count()
+            return ret
+        elif sort and not limitation:
+            ret = self.table.find(condition).sort(sort[0], sort[1])
+        elif sort and limitation:
+            ret = self.table.find(condition).sort(sort[0], sort[1]).limit(limitation)
+        elif limitation:
+            ret = self.table.find(condition).limit(limitation)
         else:
-            Ret = self.Table.find(Condition)
+            ret = self.table.find(condition)
             
-        return [Item for Item in Ret]
-
+        return [item for item in ret]
     def drop(self, Condition):
         if not self.TableName:
             raise Bear.BadBear('NoTableSelected')
@@ -70,6 +64,24 @@ class collection:
     def delete(self):
         return self.connection[self.database][self.collection].drop()
 
+
+
+    def exist(self, name, value):
+        if self.search({name, value}, count=Ture):
+            return True
+        return False
+
+    def existAndChange(self, name, value, newValue):
+        if not self.search({name:value}, count=True):
+            return False
+        self.change({name:value},{'$set':{name:newValue}})
+        return True
+
+    def notExistAndInsert(self, name, condition):
+        if self.search({name:value}, count=True):
+            return False
+        self.insert(condition)
+        return True
 
 #db.createUser({
 # 'user':'Debuger', 
